@@ -28,6 +28,11 @@ public class TelegramUserService {
 		Optional<TelegramUser> existingUser = repository.findByTelegramUserId(context.getUserId());
 
 		if (existingUser.isPresent()) {
+			TelegramUser updateUser = existingUser.get();
+			updateUser.setFirstName(context.getFirstName());
+			updateUser.setUsername(context.getUsername());
+			updateUser.setUpdatedAt(now);
+			repository.save(updateUser);
 			return new RegistrationResult(existingUser.get(), RegistrationStatus.EXISTING_USER);
 		}
 

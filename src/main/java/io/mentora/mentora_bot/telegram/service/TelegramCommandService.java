@@ -10,6 +10,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 
 import io.mentora.mentora_bot.telegram.command.TelegramCommand;
 import io.mentora.mentora_bot.telegram.command.UnknownCommand;
+import io.mentora.mentora_bot.telegram.conversation.ConversationService;
 import io.mentora.mentora_bot.telegram.model.TelegramContext;
 
 @Service
@@ -17,9 +18,12 @@ public class TelegramCommandService {
 
 	private final Map<String, TelegramCommand> commandMap = new HashMap<>();
 	private final UnknownCommand unknownCommand;
+	private final ConversationService conversationService;
 
-	public TelegramCommandService(List<TelegramCommand> commands, UnknownCommand unknownCommand) {
+	public TelegramCommandService(List<TelegramCommand> commands, UnknownCommand unknownCommand,
+			ConversationService conversationService) {
 		this.unknownCommand = unknownCommand;
+		this.conversationService = conversationService;
 
 		for (TelegramCommand command : commands) {
 			commandMap.put(command.getCommand(), command);
@@ -45,7 +49,11 @@ public class TelegramCommandService {
 			return command.execute(context);
 		}
 
-		return unknownCommand.execute(context);
+		if (context.getText().startsWith("/")) {
+			return unknownCommand.execute(context);
+		}
+
+		return conversationService.chat(context);
 
 	}
 }

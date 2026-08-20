@@ -13,7 +13,6 @@ import io.mentora.mentora_bot.telegram.ai.providers.openrouter.client.OpenRouter
 import io.mentora.mentora_bot.telegram.ai.providers.openrouter.dto.request.OpenRouterRequest;
 import io.mentora.mentora_bot.telegram.ai.providers.openrouter.dto.request.RequestMessage;
 import io.mentora.mentora_bot.telegram.ai.providers.openrouter.dto.response.OpenRouterResponse;
-import io.mentora.mentora_bot.telegram.model.TelegramContext;
 
 @Service
 public class AIService {
@@ -26,64 +25,58 @@ public class AIService {
 		this.openRouterClient = openRouterClient;
 		this.props = props;
 	}
+	
+	public String ask(List<RequestMessage> messages) {
 
-	public String ask(TelegramContext context) {
+		RequestMessage systemMessage = new RequestMessage();
+	    systemMessage.setRole("system");
+	    systemMessage.setContent(getSystemPrompt());
 
-		OpenRouterRequest request = new OpenRouterRequest();
+	    List<RequestMessage> requestMessages = new ArrayList<>();
+	    requestMessages.add(systemMessage);
+	    requestMessages.addAll(messages);
 
-		RequestMessage UserRequestMessage = new RequestMessage();
-		UserRequestMessage.setRole("user");
-		UserRequestMessage.setContent(context.getText());
-
-		RequestMessage SystemRequestMessage = new RequestMessage();
-		SystemRequestMessage.setRole("system");
-		SystemRequestMessage.setContent(getSystemPrompt());
-
-		List<RequestMessage> requestMessages = new ArrayList<>();
-		requestMessages.add(SystemRequestMessage);
-		requestMessages.add(UserRequestMessage);
-
-		request.setMessages(requestMessages);
+	    OpenRouterRequest request = new OpenRouterRequest();
+	    request.setMessages(requestMessages);
 
 		for (String model : props.getModels()) {
 
 			request.setModel(model);
 
 			try {
-
+				
 				OpenRouterResponse response = openRouterClient.chat(request);
-
 				return response.getChoices().get(0).getMessage().getContent();
-
 			} catch (HttpClientErrorException.TooManyRequests e) {
 				log.warn("Model [{}] is rate limited. Trying next model...", model);
+
 			} catch (HttpClientErrorException.Unauthorized e) {
 				log.warn("{} unauthorized, trying next model.", model);
-
 			}
-
 		}
 
-		return "Sorry, all AI services are currently busy. Please try again in a few moments.";
+	    return "Sorry, all AI services are currently busy. Please try again in a few moments.";
 	}
 
 	private String getSystemPrompt() {
-		return String.join("\n", "You are Mentora, a personal AI mentor on Telegram.",
-				"You were created by Alvin Labora as a personal learning assistant.",
-				"You are powered by an AI language model, but users interact with you as Mentora.",
-				"",
-				"Rules:",
-				"- Give direct answers without unnecessary introductions.",
-				"- Keep responses concise unless the user explicitly asks for a detailed explanation.",
-				"- Do not use Markdown formatting such as *, #, ##, **, or bullet symbols.",
-				"- Write in plain text suitable for Telegram messages.",
-				"- If the question is simple, answer in 1-3 short paragraphs.",
-				"- If the user asks for code, provide only the relevant code with a brief explanation.",
-				"- If you don't know the answer, say so instead of making up information.",
-				"- If users ask who created you, answer that you were created by Alvin Labora.",
-				"- If users ask what AI technology powers you, explain that you are powered by an AI language model through OpenRouter.",
-				"- Don't use markdown"
-
-		);
+	    return String.join("\n",
+	            "You are Mentora, a personal AI mentor on Telegram.",
+	            "You were created by Alvin Labora as a personal learning assistant.",
+	            "You are powered by an AI language model, but users interact with you as Mentora.",
+	            "",
+	            "Response Rules:",
+	            "- Answer only what the user asked.",
+	            "- Keep every response short and focused.",
+	            "- Do not provide additional information unless the user asks for it.",
+	            "- Do not give a full tutorial unless the user explicitly asks for one.",
+	            "- For simple questions, answer in 1-3 short sentences.",
+	            "- For technical questions, explain only the specific concept asked about.",
+	            "- If code is requested, provide only the necessary code.",
+	            "- Ask a short follow-up question if more explanation is needed.",
+	            "- Never repeat the user's question.",
+	            "- Do not use Markdown.",
+	            "- Write plain text suitable for Telegram.",
+	            "- If you don't know the answer, say so instead of making up information."
+	    );
 	}
 }

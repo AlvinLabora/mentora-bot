@@ -21,7 +21,11 @@ public class HelpCommand implements TelegramCommand {
 	@Override
 	public SendMessage execute(TelegramContext context) {
 		String chatId = context.getChatId();
-		return messageService.createMessage(chatId, "Available Commands:\n/start\n/help");
+		return messageService.createMessage(chatId,
+				"Available Commands:\n"
+				+ "/start - Start or restart the bot\n"
+				+ "/reset - Clear our conversation and start fresh\n"
+				+ "/help - Show this list");
 	}
 
 }

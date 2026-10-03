@@ -1,5 +1,7 @@
 package io.mentora.mentora_bot.telegram.bot;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -13,6 +15,8 @@ import io.mentora.mentora_bot.telegram.service.TelegramCommandService;
 @SuppressWarnings("deprecation")
 @Component
 public class MentoraTelegramBot extends TelegramLongPollingBot {
+	
+	private static final Logger log = LoggerFactory.getLogger(MentoraTelegramBot.class);
 
 	@Autowired
 	private TelegramBotConnectionServiceProps props;
@@ -28,8 +32,10 @@ public class MentoraTelegramBot extends TelegramLongPollingBot {
 	        try {
 	            execute(response);
 	        } catch (TelegramApiException e) {
-	            e.printStackTrace();
-	        }
+	        	log.error("Failed to send Telegram message", e);
+	        } catch (Exception e) {
+	        	log.error("Unexpected error while handling update", e);
+			}
 	    }
 	}
 
